@@ -26,15 +26,14 @@ Pod::Spec.new do |s|
   s.source           = { :git => "https://github.com/<GITHUB_USERNAME>/NiceData.git", :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.platform     = :ios, '8.0'
   s.requires_arc = true
 
-  s.source_files = 'Pod/Classes/**/*'
-  s.resource_bundles = {
-    'NiceData' => ['Pod/Assets/*.png']
-  }
+  s.ios.deployment_target = "8.0"
+  s.osx.deployment_target = "10.11"
 
-  # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
+  s.source_files = ['Pod/Classes/Shared/**/*', 'Pod/Classes/Mac/**/*']
+  
+  s.dependency 'MagicalRecord'
+  s.osx.dependency 'FirebaseOSX'
+  s.ios.dependency 'Firebase'
 end

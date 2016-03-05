@@ -1,0 +1,23 @@
+PODS:
+  - Firebase (2.5.1)
+  - MagicalRecord (2.3.2):
+    - MagicalRecord/Core (= 2.3.2)
+  - MagicalRecord/Core (2.3.2)
+  - NiceData (0.1.0):
+    - Firebase
+    - FirebaseOSX
+    - MagicalRecord
+
+DEPENDENCIES:
+  - NiceData (from `../`)
+
+EXTERNAL SOURCES:
+  NiceData:
+    :path: ../
+
+SPEC CHECKSUMS:
+  Firebase: 3565ea88b830f28f2c77ecc524622bc71a20d085
+  MagicalRecord: 53bed74b4323b930992a725be713e53b37d19755
+  NiceData: 056ae436c741add14b4bb25fe2ca8dc65da4f947
+
+COCOAPODS: 0.39.0
