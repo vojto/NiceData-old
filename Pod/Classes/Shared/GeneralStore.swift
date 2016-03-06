@@ -17,16 +17,20 @@ public class GeneralStore {
     var subscriptions = Set<StoreSubscription>()
 
     static var _instance: GeneralStore?
-    public static var instance: GeneralStore {
-        return GeneralStore._instance!
-    }
+    public static var instance: GeneralStore { return GeneralStore._instance! }
 
     var adapter: StoreAdapter!
+    
+    // MARK: - Lifecycle
+    // -----------------------------------------------------------------------
 
     public init(adapter: StoreAdapter) {
         self.adapter = adapter
         GeneralStore._instance = self
     }
+    
+    // MARK: - Managing subscriptions
+    // -----------------------------------------------------------------------
 
     public func addSubscription(subscription: StoreSubscription) {
         if subscriptions.contains(subscription) {
@@ -44,6 +48,13 @@ public class GeneralStore {
         subscription.stop()
         subscriptions.remove(subscription)
     }
+    
+    public func subscriptionNamed(name: String) -> StoreSubscription? {
+        return subscriptions.filter { $0.name == name }.first
+    }
+    
+    // MARK: - Controlling subscriptions
+    // -----------------------------------------------------------------------
 
     public func refreshAll() {
         for subscription in subscriptions {
