@@ -19,7 +19,7 @@ public class GeneralStore {
     static var _instance: GeneralStore?
     public static var instance: GeneralStore { return GeneralStore._instance! }
 
-    var adapter: StoreAdapter!
+    public var adapter: StoreAdapter!
     
     // MARK: - Lifecycle
     // -----------------------------------------------------------------------

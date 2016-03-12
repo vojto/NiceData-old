@@ -13,7 +13,7 @@ typealias SerializedRecord = SimpleDict
 public typealias RecordValues = SimpleDict
 public typealias RecordPriority = Int?
 
-enum ModelError : ErrorType {
+public enum ModelError : ErrorType {
     case BadData
 }
 
@@ -25,7 +25,7 @@ struct RecordKeys {
 }
 
 public class Record: CustomDebugStringConvertible {
-    let id: String
+    public let id: String
     public let data: RecordData
 
     init(id: String, data: RecordData) {
@@ -58,7 +58,7 @@ public class Record: CustomDebugStringConvertible {
 }
 
 public class RecordData: CustomDebugStringConvertible {
-    let priority: RecordPriority
+    public let priority: RecordPriority
     public var values: RecordValues
 
     public init(values: RecordValues, priority: RecordPriority) {
@@ -66,7 +66,7 @@ public class RecordData: CustomDebugStringConvertible {
         self.values = values
     }
 
-    func serialize() -> [String: AnyObject] {
+    public func serialize() -> [String: AnyObject] {
         var result: [String: AnyObject] = [
             RecordKeys.values: values
         ]
@@ -78,19 +78,19 @@ public class RecordData: CustomDebugStringConvertible {
         return result
     }
 
-    static func deserialize(serialized: SimpleDict) -> RecordData? {
+    public static func deserialize(serialized: SimpleDict) -> RecordData? {
         guard let priority = serialized[RecordKeys.priority] as? RecordPriority else { return nil }
         guard let values = serialized[RecordKeys.values] as? RecordValues else { return nil }
 
         return RecordData(values: values, priority: priority)
     }
 
-    func requiredDate(key: String) throws -> NSDate {
+    public func requiredDate(key: String) throws -> NSDate {
         guard let timestamp = values[key] as? NSNumber else { throw ModelError.BadData }
         return NSDate(timeIntervalSince1970: timestamp.doubleValue)
     }
 
-    func optionalDate(key: String) throws -> NSDate? {
+    public func optionalDate(key: String) throws -> NSDate? {
         guard let timestamp = values[key] as? NSNumber? else { throw ModelError.BadData }
         if let timestamp = timestamp {
             return NSDate(timeIntervalSince1970: timestamp.doubleValue)
@@ -99,37 +99,37 @@ public class RecordData: CustomDebugStringConvertible {
         }
     }
 
-    func requiredDouble(key: String) throws -> Double {
+    public func requiredDouble(key: String) throws -> Double {
         guard let value = values[key] as? NSNumber else { throw ModelError.BadData }
         return value.doubleValue
     }
 
-    func optionalDouble(key: String) throws -> Double? {
+    public func optionalDouble(key: String) throws -> Double? {
         guard let value = values[key] as? NSNumber? else { throw ModelError.BadData }
         return value?.doubleValue
     }
 
-    func optionalInt(key: String) throws -> Int? {
+    public func optionalInt(key: String) throws -> Int? {
         guard let value = values[key] as? NSNumber? else { throw ModelError.BadData }
         return value?.integerValue
     }
 
-    func requiredBool(key: String) throws -> Bool {
+    public func requiredBool(key: String) throws -> Bool {
         guard let value = values[key] as? NSNumber else { throw ModelError.BadData }
         return value.boolValue
     }
 
-    func optionalBool(key: String) throws -> Bool? {
+    public func optionalBool(key: String) throws -> Bool? {
         guard let value = values[key] as? NSNumber? else { throw ModelError.BadData }
         return value?.boolValue
     }
 
-    func requiredString(key: String) throws -> String {
+    public func requiredString(key: String) throws -> String {
         guard let value = values[key] as? String else { throw ModelError.BadData }
         return value
     }
 
-    func optionalString(key: String) throws -> String? {
+    public func optionalString(key: String) throws -> String? {
         guard let value = values[key] as? String? else { throw ModelError.BadData }
         return value
     }

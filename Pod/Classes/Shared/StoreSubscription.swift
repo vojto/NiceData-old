@@ -57,7 +57,7 @@ public class StoreSubscription: Hashable {
         }
     }
 
-    func stop() {
+    public func stop() {
         if let handle = self.handle {
             adapter.stopUpdating(handle)
             self.handle = nil
@@ -66,7 +66,7 @@ public class StoreSubscription: Hashable {
         }
     }
 
-    func forceRefresh() {
+    public func forceRefresh() {
         let store = GeneralStore.instance
 
         if !store.hasSubscription(self) {

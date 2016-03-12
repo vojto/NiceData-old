@@ -17,27 +17,28 @@ struct FirebaseHandle: UpdatingHandle {
 }
 
 
-class FirebaseAdapter: StoreAdapter {
-    static var firebase: Firebase!
+public class FirebaseAdapter: StoreAdapter {
+    public static var firebase: Firebase!
     var firebase: Firebase
-    static var instance: FirebaseAdapter!
+    public static var instance: FirebaseAdapter!
 
     var uid: String? {
         return firebase.authData?.uid
     }
 
-    init() {
+    public init() {
 //        Firebase.setLoggingEnabled(true)
 
         Firebase.defaultConfig().persistenceEnabled = true
-        firebase = Firebase(url: "https://pomodoro-done.firebaseio.com")
+//        firebase = Firebase(url: "https://pomodoro-done.firebaseio.com")
+        firebase = Firebase(url: "https://focuslist-dev.firebaseio.com")
 
         FirebaseAdapter.firebase = firebase
 
         FirebaseAdapter.instance = self
     }
 
-    func startUpdating(path: String, filter: [String: AnyObject], sort: String?, callback: StoreCallback) -> UpdatingHandle {
+    public func startUpdating(path: String, filter: [String: AnyObject], sort: String?, callback: StoreCallback) -> UpdatingHandle {
         let query = buildQuery(path, filter: filter, sort: sort)
 
         let id = query.observeEventType(.Value, withBlock: { snapshot in
@@ -50,7 +51,7 @@ class FirebaseAdapter: StoreAdapter {
         return handle
     }
 
-    func stopUpdating(handle: UpdatingHandle) {
+    public func stopUpdating(handle: UpdatingHandle) {
         let handle = handle as! FirebaseHandle
 
         let node = rootLocation.childByAppendingPath(handle.path)
@@ -58,7 +59,7 @@ class FirebaseAdapter: StoreAdapter {
         node.removeObserverWithHandle(handle.id)
     }
 
-    func loadNow(path: String, filter: [String: AnyObject], sort: String?, callback: StoreCallback) {
+    public func loadNow(path: String, filter: [String: AnyObject], sort: String?, callback: StoreCallback) {
         let query = buildQuery(path, filter: filter, sort: sort)
 
         query.observeSingleEventOfType(.Value, withBlock: { snapshot in
@@ -67,7 +68,7 @@ class FirebaseAdapter: StoreAdapter {
         })
     }
 
-    func buildQuery(path: String, filter: [String: AnyObject], sort: String?) -> FQuery {
+    public func buildQuery(path: String, filter: [String: AnyObject], sort: String?) -> FQuery {
         var query: FQuery = rootLocation.childByAppendingPath(path)
 
         if filter.count > 0 {
@@ -125,7 +126,7 @@ class FirebaseAdapter: StoreAdapter {
 
     // MARK: Finding
 
-    func find(path: String, id: String, callback: FindCallback) {
+    public func find(path: String, id: String, callback: FindCallback) {
         let query = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
 
         query.observeSingleEventOfType(.Value, withBlock: { snap in
@@ -137,7 +138,7 @@ class FirebaseAdapter: StoreAdapter {
 
     // MARK: Helpers
 
-    var rootLocation: Firebase {
+    public var rootLocation: Firebase {
         let id: String
 
         if let user = firebase.authData {
@@ -148,14 +149,14 @@ class FirebaseAdapter: StoreAdapter {
     }
 
     var offlineLocation: Firebase {
-        fatalError("Firebase will NOT be used offline!")
-//        return firebase.childByAppendingPath("offline").childByAppendingPath(NKDevice.uniqueIdentifier)
+//        fatalError("Firebase will NOT be used offline!")
+        return firebase.childByAppendingPath("offline").childByAppendingPath(NKDevice.uniqueIdentifier)
     }
 
     // MARK: Creating
 
 
-    func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) {
+    public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) {
         var location = rootLocation.childByAppendingPath(path)
 
         if let id = id {
@@ -173,7 +174,7 @@ class FirebaseAdapter: StoreAdapter {
 
     // MARK: Updating
 
-    func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
+    public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
         let location = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
         location.setValue(data.values, andPriority: data.priority) { _ in
             callback?()
