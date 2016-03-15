@@ -158,30 +158,30 @@ public class CoreDataAdapter: StoreAdapter {
         let request = NSFetchRequest(entityName: entityName)
         request.sortDescriptors = [NSSortDescriptor(key: sort, ascending: true)]
 
-        if filter.count == 0 {
-            // Don't need to do anything
-        } else if filter.count == 1 {
-            let key = filter.keys.first!
-            if let value = filter[key] as? String {
-                request.predicate = NSPredicate(format: "\(key) = %@", value)
-            } else if let value = filter[key] as? NSNumber {
-                request.predicate = NSPredicate(format: "\(key) = %@", value)
-            } else if let value = filter[key] as? [NSNumber] {
-                let from = value[0]
-                let to = value[1]
+        // Create NSCompoundPredicate from conditions
 
-                request.predicate = NSPredicate(format: "\(key) >= %@ AND \(key) <= %@", from, to)
-            } else if let value = filter[key] as? [NSDate] {
-                let from = value[0]
-                let to = value[1]
+        var predicates = [NSPredicate]()
+        for condition in filter.conditions {
+            let column = condition.column
 
-                request.predicate = NSPredicate(format: "\(key) >= %@ AND \(key) <= %@", from, to)
-            } else {
-                fatalError("Well I can't make other predicate than String or Number... Sorry.")
+            switch condition {
+            case let condition as EqualsFilterCondition:
+                let value = condition.value
+                let predicate = NSPredicate(format: "\(column) = %@", argumentArray: [value])
+                predicates.append(predicate)
+            case let condition as  BetweenFilterCondition:
+                let value1 = condition.value1
+                let value2 = condition.value2
+                let predicate = NSPredicate(format: "%K >= %@ AND %K <= %@", argumentArray: [column, value1, column, value2])
+                predicates.append(predicate)
+            default:
+                fatalError("Cannot create predicate from condition of type \(condition.dynamicType)")
             }
-        } else {
-            fatalError("This is awkward but I can't filter by more than one key")
         }
+
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+
+        request.predicate = predicate
 
         return request
     }

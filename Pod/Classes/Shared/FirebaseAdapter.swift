@@ -38,7 +38,7 @@ public class FirebaseAdapter: StoreAdapter {
         FirebaseAdapter.instance = self
     }
 
-    public func startUpdating(path: String, filter: [String: AnyObject], sort: String?, callback: StoreCallback) -> UpdatingHandle {
+    public func startUpdating(path: String, filter: Filter, sort: String?, callback: StoreCallback) -> UpdatingHandle {
         let query = buildQuery(path, filter: filter, sort: sort)
 
         let id = query.observeEventType(.Value, withBlock: { snapshot in
@@ -59,7 +59,7 @@ public class FirebaseAdapter: StoreAdapter {
         node.removeObserverWithHandle(handle.id)
     }
 
-    public func loadNow(path: String, filter: [String: AnyObject], sort: String?, callback: StoreCallback) {
+    public func loadNow(path: String, filter: Filter, sort: String?, callback: StoreCallback) {
         let query = buildQuery(path, filter: filter, sort: sort)
 
         query.observeSingleEventOfType(.Value, withBlock: { snapshot in
@@ -68,32 +68,47 @@ public class FirebaseAdapter: StoreAdapter {
         })
     }
 
-    public func buildQuery(path: String, filter: [String: AnyObject], sort: String?) -> FQuery {
+    public func buildQuery(path: String, filter: Filter, sort: String?) -> FQuery {
         var query: FQuery = rootLocation.childByAppendingPath(path)
 
-        if filter.count > 0 {
-            if filter.count > 1 {
-                fatalError("Filtering on more than 1 condition not supported: \(filter)")
-            }
+        query = self.applyFilterToQuery(query, filter: filter)
 
-            let key = filter.keys.first!
-            let value = filter[key]
-
-            query = query.queryOrderedByChild(key)
-
-            if let values = value as? [AnyObject] {
-                query = query.queryStartingAtValue(values[0]).queryEndingAtValue(values[1])
-            } else {
-                query = query.queryEqualToValue(value)
-            }
-        } else if let sort = sort where sort == "priority" {
+        if let sort = sort where sort == "priority" {
             query.queryOrderedByPriority()
         } // TODO: Sorting other than priority
 
         return query
     }
 
-    func recordsFromSnapshot(snapshot: FDataSnapshot, filter: [String: AnyObject], sort: String?) -> [Record] {
+    func applyFilterToQuery(var query: FQuery, filter: Filter) -> FQuery {
+        let conditions = filter.conditions
+
+        if conditions.count == 0 {
+            return query
+        }
+
+        if conditions.count > 1 {
+            fatalError("Firebase only supports filtering by 1 condition \(filter)")
+        }
+
+        let condition = conditions.first!
+        let key = condition.column
+
+        query = query.queryOrderedByChild(key)
+
+        switch condition {
+        case let condition as EqualsFilterCondition:
+            query = query.queryEqualToValue(condition.value)
+        case let condition as BetweenFilterCondition:
+            query = query.queryStartingAtValue(condition.value1).queryEndingAtValue(condition.value2)
+        default:
+            fatalError("Cannot apply filter to query for condition type \(condition.dynamicType)")
+        }
+
+        return query
+    }
+
+    func recordsFromSnapshot(snapshot: FDataSnapshot, filter: Filter, sort: String?) -> [Record] {
         var records = [Record]()
 
         for item in snapshot.children {
@@ -109,7 +124,7 @@ public class FirebaseAdapter: StoreAdapter {
         // If there was a filter, then sorting was not applied and
         // we have to apply it here.
 
-        if filter.count > 0 && sort == "priority" {
+        if filter.conditions.count > 0 && sort == "priority" {
             records.sortInPlace { $0.data.priority < $1.data.priority }
         }
 

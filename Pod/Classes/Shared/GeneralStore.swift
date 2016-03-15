@@ -9,7 +9,69 @@
 import Foundation
 
 
-public typealias Filter = [String: AnyObject]
+//public typealias Filter = [String: AnyObject]
+
+public class Filter {
+    var conditions = [FilterCondition]()
+
+    public init() {
+        
+    }
+
+    public func between(column: String, value1: AnyObject, value2: AnyObject) -> Filter {
+        let condition = BetweenFilterCondition(column: column, value1: value1, value2: value2)
+
+        conditions.append(condition)
+
+        return self
+    }
+
+    public func equals(column: String, value: AnyObject) -> Filter {
+        let condition = EqualsFilterCondition(column: column, value: value)
+
+        conditions.append(condition)
+
+        return self
+    }
+}
+
+//enum ConditionType {
+//    case Equals
+//    case GreaterThan
+//    case LessThan
+//    case Between
+//    case In
+//}
+
+public class FilterCondition {
+    var column: String
+
+    init(column: String) {
+        self.column = column
+    }
+}
+
+public class EqualsFilterCondition: FilterCondition {
+    public var value: AnyObject
+
+    public init(column: String, value: AnyObject) {
+        self.value = value
+        super.init(column: column)
+    }
+
+}
+
+public class BetweenFilterCondition: FilterCondition {
+    public var value1: AnyObject
+    public var value2: AnyObject
+
+    init(column: String, value1: AnyObject, value2: AnyObject) {
+        self.value1 = value1
+        self.value2 = value2
+        super.init(column: column)
+    }
+
+}
 
 
 
