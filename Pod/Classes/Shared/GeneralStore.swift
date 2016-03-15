@@ -15,23 +15,34 @@ public class Filter {
     var conditions = [FilterCondition]()
 
     public init() {
-        
     }
 
     public func between(column: String, value1: AnyObject, value2: AnyObject) -> Filter {
-        let condition = BetweenFilterCondition(column: column, value1: value1, value2: value2)
-
-        conditions.append(condition)
-
+        conditions.append(BetweenFilterCondition(column: column, value1: value1, value2: value2))
         return self
     }
 
     public func equals(column: String, value: AnyObject) -> Filter {
-        let condition = EqualsFilterCondition(column: column, value: value)
-
-        conditions.append(condition)
-
+        conditions.append(EqualsFilterCondition(column: column, value: value))
         return self
+    }
+
+    public func inValues(column: String, values: [AnyObject]) -> Filter {
+        conditions.append(InFilterCondition(column: column, values: values))
+        return self
+    }
+
+    public func removeInCondition() -> InFilterCondition? {
+        for var i = 0; i < conditions.count; i++ {
+            let condition = conditions[i]
+
+            if let condition = condition as? InFilterCondition {
+                conditions.removeAtIndex(i)
+                return condition
+            }
+        }
+
+        return nil
     }
 }
 
@@ -70,9 +81,16 @@ public class BetweenFilterCondition: FilterCondition {
         self.value2 = value2
         super.init(column: column)
     }
-
 }
 
+public class InFilterCondition: FilterCondition {
+    public var values: [AnyObject]
+
+    init(column: String, values: [AnyObject]) {
+        self.values = values
+        super.init(column: column)
+    }
+}
 
 
 public class GeneralStore {

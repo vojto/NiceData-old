@@ -60,12 +60,59 @@ public class FirebaseAdapter: StoreAdapter {
     }
 
     public func loadNow(path: String, filter: Filter, sort: String?, callback: StoreCallback) {
+        if let inCondition = filter.removeInCondition() {
+            return self.loadNow(path, filter:filter, sort: sort, inCondition: inCondition, callback: callback)
+        }
+
         let query = buildQuery(path, filter: filter, sort: sort)
 
         query.observeSingleEventOfType(.Value, withBlock: { snapshot in
             let records = self.recordsFromSnapshot(snapshot, filter: filter, sort: sort)
             callback(records: records)
         })
+    }
+
+    public func loadNow(path: String, filter: Filter, sort: String?, inCondition: InFilterCondition, callback: StoreCallback) {
+        if inCondition.column == "id" {
+            let ids = inCondition.values as! [String]
+            self.loadNow(path, filter: filter, sort: sort, idIn: ids, callback: callback)
+        } else {
+            fatalError("Cannot make IN queries for columns other than ID")
+        }
+    }
+
+    public func loadNow(path: String, filter: Filter, sort: String?, idIn ids: [String], callback: StoreCallback) {
+        // Loading data for multiple IDs takes finding multiple locations and waiting for each request fo finish
+
+        if filter.conditions.count > 0 {
+            fatalError("When loading using IN for ids, further filtering is not supported")
+        }
+
+        if sort != nil {
+            fatalError("When loading using IN for ids, sorting is not supported")
+        }
+
+        let requestsCount = ids.count
+        var loadedCount = 0
+
+        var records = [Record]()
+
+        for id in ids {
+            let query: FQuery = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
+
+            query.observeSingleEventOfType(.Value, withBlock: { snapshot in
+                if let record = self.recordFromSnapshot(snapshot) {
+                    records.append(record)
+                }
+
+                loadedCount += 1
+
+                if loadedCount == requestsCount {
+                    callback(records: records)
+                }
+            })
+        }
+
     }
 
     public func buildQuery(path: String, filter: Filter, sort: String?) -> FQuery {
@@ -118,7 +165,6 @@ public class FirebaseAdapter: StoreAdapter {
             } else {
                 Log.e("Cannot create record from snapshot: \(snap)")
             }
-
         }
 
         // If there was a filter, then sorting was not applied and
@@ -154,8 +200,6 @@ public class FirebaseAdapter: StoreAdapter {
     // MARK: Helpers
 
     public var rootLocation: Firebase {
-        let id: String
-
         if let user = firebase.authData {
             return firebase.childByAppendingPath("online").childByAppendingPath(user.uid)
         } else {
