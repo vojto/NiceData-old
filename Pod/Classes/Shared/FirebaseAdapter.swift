@@ -26,13 +26,12 @@ public class FirebaseAdapter: StoreAdapter {
         return firebase.authData?.uid
     }
 
-    public init() {
+    public init(url: String) {
 //        Firebase.setLoggingEnabled(true)
 
         Firebase.defaultConfig().persistenceEnabled = true
 
-//        firebase = Firebase(url: "https://pomodoro-done.firebaseio.com")
-        firebase = Firebase(url: "https://focuslist-dev.firebaseio.com")
+        firebase = Firebase(url: url)
 
         FirebaseAdapter.firebase = firebase
 
