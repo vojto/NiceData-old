@@ -174,6 +174,10 @@ public class CoreDataAdapter: StoreAdapter {
                 let value2 = condition.value2
                 let predicate = NSPredicate(format: "%K >= %@ AND %K <= %@", argumentArray: [column, value1, column, value2])
                 predicates.append(predicate)
+            case let condition as InFilterCondition:
+                let values = condition.values
+                let predicate = NSPredicate(format: "%K IN %@", argumentArray: [column, values])
+                predicates.append(predicate)
             default:
                 fatalError("Cannot create predicate from condition of type \(condition.dynamicType)")
             }

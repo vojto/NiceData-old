@@ -30,6 +30,7 @@ public class FirebaseAdapter: StoreAdapter {
 //        Firebase.setLoggingEnabled(true)
 
         Firebase.defaultConfig().persistenceEnabled = true
+
 //        firebase = Firebase(url: "https://pomodoro-done.firebaseio.com")
         firebase = Firebase(url: "https://focuslist-dev.firebaseio.com")
 
