@@ -171,4 +171,8 @@ public class GeneralStore {
     public func findOnce(path: String, filter: Filter, sort: String?, callback: StoreCallback) {
         adapter.loadNow(path, filter: filter, sort: sort, callback: callback)
     }
+
+    public func delete(path: String, id: String, callback: DeleteCallback?) {
+        adapter.delete(path, id: id, callback: callback)
+    }
 }

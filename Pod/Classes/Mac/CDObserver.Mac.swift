@@ -67,7 +67,6 @@ class CDObserver: NSObject {
 
 
         if changedEntities.contains(request.entity!.name!) {
-            print("Re-fetching")
             fetch()
         }
     }

@@ -75,8 +75,6 @@ public class CoreDataAdapter: StoreAdapter {
     }
 
     public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
-        Log.t("😡 updating \(path)/\(id)")
-
         let context = NSManagedObjectContext.MR_defaultContext()
 
         guard let object = self.findObject(context, path: path, id: id) else {
@@ -103,8 +101,6 @@ public class CoreDataAdapter: StoreAdapter {
             Log.e("Failed finding object by id \(path) \(id)")
             return nil
         }
-
-
     }
 
 
@@ -147,9 +143,6 @@ public class CoreDataAdapter: StoreAdapter {
     }
 
     public func createFetchRequest(path: String, filter: Filter, var sort: String?) -> NSFetchRequest {
-//        print("Creating request: \(path), filter: \(filter), sort: \(sort)")
-
-
         if sort == nil {
             sort = "priority"
         }
@@ -213,6 +206,25 @@ public class CoreDataAdapter: StoreAdapter {
 
     public func find(path: String, id: String, callback: FindCallback) {
         fatalError("find not implemented")
+    }
+
+    // MARK: - Deleting
+    // -----------------------------------------------------------------------
+
+
+    public func delete(path: String, id: String, callback: DeleteCallback?) {
+        let context = NSManagedObjectContext.MR_defaultContext()
+
+        guard let object = findObject(context, path: path, id: id) else {
+            Log.e("Didn't find object with id \(id) at \(path) so cannot delete.")
+            return
+        }
+
+        context.deleteObject(object)
+
+        context.MR_saveToPersistentStoreAndWait()
+
+        callback?()
     }
 
 

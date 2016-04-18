@@ -81,7 +81,7 @@ public class FirebaseAdapter: StoreAdapter {
         }
     }
 
-    public func loadNow(path: String, filter: Filter, sort: String?, idIn ids: [String], callback: StoreCallback) {
+    public func loadNow(path: String, filter: Filter, sort: String?, var idIn ids: [String], callback: StoreCallback) {
         // Loading data for multiple IDs takes finding multiple locations and waiting for each request fo finish
 
         if filter.conditions.count > 0 {
@@ -92,10 +92,13 @@ public class FirebaseAdapter: StoreAdapter {
             fatalError("When loading using IN for ids, sorting is not supported")
         }
 
-        let requestsCount = ids.count
-        var loadedCount = 0
 
         var records = [Record]()
+
+        ids = Array(Set(ids))
+
+        let requestsCount = ids.count
+        var loadedCount = 0
 
         for id in ids {
             let query: FQuery = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
@@ -198,6 +201,7 @@ public class FirebaseAdapter: StoreAdapter {
     }
 
     // MARK: Helpers
+    // ----------------------------------------------------------------------
 
     public var rootLocation: Firebase {
         if let user = firebase.authData {
@@ -213,7 +217,7 @@ public class FirebaseAdapter: StoreAdapter {
     }
 
     // MARK: Creating
-
+    // ----------------------------------------------------------------------
 
     public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) {
         var location = rootLocation.childByAppendingPath(path)
@@ -231,7 +235,8 @@ public class FirebaseAdapter: StoreAdapter {
         }
     }
 
-    // MARK: Updating
+    // MARK: - Updating
+    // ----------------------------------------------------------------------
 
     public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
         let location = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
@@ -251,7 +256,14 @@ public class FirebaseAdapter: StoreAdapter {
     */
 
     func find(id: String, filter: Filter, callback: FindCallback) {
+    }
 
+
+    // MARK: - Deleting
+    // ----------------------------------------------------------------------
+
+    public func delete(path: String, id: String, callback: DeleteCallback?) {
+        fatalError("Not implemented yet")
     }
 }
 

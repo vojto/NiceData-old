@@ -11,6 +11,7 @@ import Foundation
 public typealias StoreCallback = (records: [Record]) -> ()
 public typealias CreateCallback = ((record: Record) -> ())
 public typealias UpdateCallback = (() -> ())
+public typealias DeleteCallback = (() -> ())
 public typealias FindCallback = ((record: Record?) -> ())
 
 public protocol StoreAdapter {
@@ -18,6 +19,7 @@ public protocol StoreAdapter {
     // created with that ID.
     func create(path: String, id: String?, data: RecordData, callback: CreateCallback?)
     func update(path: String, id: String, data: RecordData, callback: UpdateCallback?)
+    func delete(path: String, id: String, callback: DeleteCallback?)
     func startUpdating(path: String, filter: Filter, sort: String?, callback: StoreCallback) -> UpdatingHandle
     func stopUpdating(handle: UpdatingHandle)
     func loadNow(path: String, filter: Filter, sort: String?, callback: StoreCallback)
