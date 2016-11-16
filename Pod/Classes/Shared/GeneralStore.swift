@@ -155,7 +155,9 @@ public class GeneralStore {
     }
 
     public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) {
-        adapter.create(path, id: id, data: data, callback: callback)
+        let id = adapter.create(path, id: id, data: data, callback: callback)
+        
+        UndoManager.instance.trackCreate(path, id: id)
     }
 
     public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {

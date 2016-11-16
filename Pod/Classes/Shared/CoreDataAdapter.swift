@@ -30,7 +30,7 @@ public class CoreDataAdapter: StoreAdapter {
     public init() {
     }
 
-    public func create(path: String, var id: String?, data: RecordData, callback: CreateCallback?) {
+    public func create(path: String, var id: String?, data: RecordData, callback: CreateCallback?) -> String {
         let priority = data.priority
 
         let context = NSManagedObjectContext.MR_defaultContext()
@@ -56,6 +56,8 @@ public class CoreDataAdapter: StoreAdapter {
 
         let record = Record(id: id!, priority: priority, values: data.values)
         callback?(record: record)
+        
+        return id!
     }
 
     public func updateObjectFromRecord(object: NSManagedObject, id: String, data: RecordData) {
