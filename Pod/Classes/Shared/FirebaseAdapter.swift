@@ -123,7 +123,7 @@ public class FirebaseAdapter: StoreAdapter {
 
         query = self.applyFilterToQuery(query, filter: filter)
 
-        if let sort = sort where sort == "priority" {
+        if let sort = sort, sort == "priority" {
             query.queryOrderedByPriority()
         } // TODO: Sorting other than priority
 
@@ -152,7 +152,7 @@ public class FirebaseAdapter: StoreAdapter {
         case let condition as BetweenFilterCondition:
             query = query.queryStartingAtValue(condition.value1).queryEndingAtValue(condition.value2)
         default:
-            fatalError("Cannot apply filter to query for condition type \(condition.dynamicType)")
+            fatalError("Cannot apply filter to query for condition type \(type(of: condition))")
         }
 
         return query

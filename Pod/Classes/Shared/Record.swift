@@ -8,12 +8,11 @@
 
 import Foundation
 
-public typealias SimpleDict = [String: AnyObject]
 typealias SerializedRecord = SimpleDict
 public typealias RecordValues = SimpleDict
 public typealias RecordPriority = Int?
 
-public enum ModelError : ErrorType {
+public enum ModelError : Error {
     case BadData
 }
 
