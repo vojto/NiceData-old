@@ -39,10 +39,12 @@ public class FirebaseAdapter: StoreAdapter {
     }
 
     public func startUpdating(path: String, filter: Filter, sort: String?, callback: StoreCallback) -> UpdatingHandle {
+        
         let query = buildQuery(path, filter: filter, sort: sort)
 
         let id = query.observeEventType(.Value, withBlock: { snapshot in
             let records = self.recordsFromSnapshot(snapshot, filter: filter, sort: sort)
+            
             callback(records: records)
         })
 
@@ -65,7 +67,7 @@ public class FirebaseAdapter: StoreAdapter {
         }
 
         let query = buildQuery(path, filter: filter, sort: sort)
-
+        
         query.observeSingleEventOfType(.Value, withBlock: { snapshot in
             let records = self.recordsFromSnapshot(snapshot, filter: filter, sort: sort)
             callback(records: records)
@@ -219,7 +221,7 @@ public class FirebaseAdapter: StoreAdapter {
     // MARK: Creating
     // ----------------------------------------------------------------------
 
-    public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) {
+    public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) -> String {
         var location = rootLocation.childByAppendingPath(path)
 
         if let id = id {
@@ -233,6 +235,8 @@ public class FirebaseAdapter: StoreAdapter {
 
             callback?(record: record)
         }
+        
+        return location.key
     }
 
     // MARK: - Updating
@@ -240,7 +244,8 @@ public class FirebaseAdapter: StoreAdapter {
 
     public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
         let location = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
-        location.setValue(data.values, andPriority: data.priority) { _ in
+        location.setPriority(data.priority)
+        location.updateChildValues(data.values) { (err, loc) in
             callback?()
         }
     }
@@ -263,7 +268,9 @@ public class FirebaseAdapter: StoreAdapter {
     // ----------------------------------------------------------------------
 
     public func delete(path: String, id: String, callback: DeleteCallback?) {
-        fatalError("Not implemented yet")
+        let location = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
+        
+        location.removeValue()
     }
 }
 
