@@ -1,0 +1,3 @@
+[submodule "NiceData"]
+	path = NiceData
+	url = git@github.com:vojto/NiceData.git
