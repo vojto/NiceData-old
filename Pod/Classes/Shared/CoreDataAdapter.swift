@@ -174,7 +174,7 @@ public class CoreDataAdapter: StoreAdapter {
                 let predicate = NSPredicate(format: "%K IN %@", argumentArray: [column, values])
                 predicates.append(predicate)
             default:
-                fatalError("Cannot create predicate from condition of type \(type(of: condition))")
+                fatalError("Cannot create predicate from condition of type \(condition.dynamicType)")
             }
         }
 

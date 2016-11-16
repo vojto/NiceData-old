@@ -11,25 +11,25 @@ import Foundation
 public class Log {
     public static var dev = true
 
-    public static func e(_ message: String) {
+    public static func e(message: String) {
         print("❌ \(message)")
     }
 
-    public static func e(_ error: NSError?) {
+    public static func e(error: NSError?) {
         if error != nil {
             self.e("Error: \(error)")
         }
     }
 
-    public static func w(_ message: String) {
+    public static func w(message: String) {
         print("⚠️ \(message)")
     }
 
-    public static func t(_ message: String) {
+    public static func t(message: String) {
         print(message)
     }
 
-    static func print(_ message: String) {
+    static func print(message: String) {
         if Log.dev {
             Swift.print(message)
         }
@@ -42,7 +42,7 @@ public class Log {
         self.start = CFAbsoluteTimeGetCurrent()
     }
 
-    static func perf(_ message: String) {
+    static func perf(message: String) {
         let now = CFAbsoluteTimeGetCurrent()
         let time = now - start
 

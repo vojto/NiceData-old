@@ -8,11 +8,11 @@
 
 import Foundation
 
-public typealias StoreCallback = (_ records: [Record]) -> ()
-public typealias CreateCallback = ((_ record: Record) -> ())
+public typealias StoreCallback = (records: [Record]) -> ()
+public typealias CreateCallback = ((record: Record) -> ())
 public typealias UpdateCallback = (() -> ())
 public typealias DeleteCallback = (() -> ())
-public typealias FindCallback = ((_ record: Record?) -> ())
+public typealias FindCallback = ((record: Record?) -> ())
 
 public protocol StoreAdapter {
     // Create record. You can pass optional ID - if you pass it, record will be
