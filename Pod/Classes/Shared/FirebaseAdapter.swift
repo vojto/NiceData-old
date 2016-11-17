@@ -17,10 +17,10 @@ struct FirebaseHandle: UpdatingHandle {
 }
 
 
-public class FirebaseAdapter: StoreAdapter {
-    public static var firebase: Firebase!
+open class FirebaseAdapter: StoreAdapter {
+    open static var firebase: Firebase!
     var firebase: Firebase
-    public static var instance: FirebaseAdapter!
+    open static var instance: FirebaseAdapter!
 
     var uid: String? {
         return firebase.authData?.uid
@@ -38,14 +38,14 @@ public class FirebaseAdapter: StoreAdapter {
         FirebaseAdapter.instance = self
     }
 
-    public func startUpdating(path: String, filter: Filter, sort: String?, callback: StoreCallback) -> UpdatingHandle {
+    open func startUpdating(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback) -> UpdatingHandle {
         
         let query = buildQuery(path, filter: filter, sort: sort)
 
-        let id = query.observeEventType(.Value, withBlock: { snapshot in
-            let records = self.recordsFromSnapshot(snapshot, filter: filter, sort: sort)
+        let id = query.observe(.value, with: { snapshot in
+            let records = self.recordsFromSnapshot(snapshot!, filter: filter, sort: sort)
             
-            callback(records: records)
+            callback(records)
         })
 
         let handle = FirebaseHandle(id: id, path: path)
@@ -53,28 +53,28 @@ public class FirebaseAdapter: StoreAdapter {
         return handle
     }
 
-    public func stopUpdating(handle: UpdatingHandle) {
+    open func stopUpdating(_ handle: UpdatingHandle) {
         let handle = handle as! FirebaseHandle
 
-        let node = rootLocation.childByAppendingPath(handle.path)
+        let node = rootLocation.child(byAppendingPath: handle.path)
 
-        node.removeObserverWithHandle(handle.id)
+        node?.removeObserver(withHandle: handle.id)
     }
 
-    public func loadNow(path: String, filter: Filter, sort: String?, callback: StoreCallback) {
+    open func loadNow(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback) {
         if let inCondition = filter.removeInCondition() {
             return self.loadNow(path, filter:filter, sort: sort, inCondition: inCondition, callback: callback)
         }
 
         let query = buildQuery(path, filter: filter, sort: sort)
         
-        query.observeSingleEventOfType(.Value, withBlock: { snapshot in
-            let records = self.recordsFromSnapshot(snapshot, filter: filter, sort: sort)
-            callback(records: records)
+        query.observeSingleEvent(of: .value, with: { snapshot in
+            let records = self.recordsFromSnapshot(snapshot!, filter: filter, sort: sort)
+            callback(records)
         })
     }
 
-    public func loadNow(path: String, filter: Filter, sort: String?, inCondition: InFilterCondition, callback: StoreCallback) {
+    open func loadNow(_ path: String, filter: Filter, sort: String?, inCondition: InFilterCondition, callback: @escaping StoreCallback) {
         if inCondition.column == "id" {
             let ids = inCondition.values as! [String]
             self.loadNow(path, filter: filter, sort: sort, idIn: ids, callback: callback)
@@ -83,9 +83,10 @@ public class FirebaseAdapter: StoreAdapter {
         }
     }
 
-    public func loadNow(path: String, filter: Filter, sort: String?, var idIn ids: [String], callback: StoreCallback) {
+    open func loadNow(_ path: String, filter: Filter, sort: String?, idIn ids: [String], callback: @escaping StoreCallback) {
         // Loading data for multiple IDs takes finding multiple locations and waiting for each request fo finish
-
+        
+        var ids = ids
         if filter.conditions.count > 0 {
             fatalError("When loading using IN for ids, further filtering is not supported")
         }
@@ -103,25 +104,25 @@ public class FirebaseAdapter: StoreAdapter {
         var loadedCount = 0
 
         for id in ids {
-            let query: FQuery = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
+            let query: FQuery = rootLocation.child(byAppendingPath: path).child(byAppendingPath: id)
 
-            query.observeSingleEventOfType(.Value, withBlock: { snapshot in
-                if let record = self.recordFromSnapshot(snapshot) {
+            query.observeSingleEvent(of: .value, with: { snapshot in
+                if let record = self.recordFromSnapshot(snapshot!) {
                     records.append(record)
                 }
 
                 loadedCount += 1
 
                 if loadedCount == requestsCount {
-                    callback(records: records)
+                    callback(records)
                 }
             })
         }
 
     }
 
-    public func buildQuery(path: String, filter: Filter, sort: String?) -> FQuery {
-        var query: FQuery = rootLocation.childByAppendingPath(path)
+    open func buildQuery(_ path: String, filter: Filter, sort: String?) -> FQuery {
+        var query: FQuery = rootLocation.child(byAppendingPath: path)
 
         query = self.applyFilterToQuery(query, filter: filter)
 
@@ -132,7 +133,8 @@ public class FirebaseAdapter: StoreAdapter {
         return query
     }
 
-    func applyFilterToQuery(var query: FQuery, filter: Filter) -> FQuery {
+    func applyFilterToQuery( _ query: FQuery, filter: Filter) -> FQuery {
+        var query = query
         let conditions = filter.conditions
 
         if conditions.count == 0 {
@@ -146,13 +148,13 @@ public class FirebaseAdapter: StoreAdapter {
         let condition = conditions.first!
         let key = condition.column
 
-        query = query.queryOrderedByChild(key)
+        query = query.queryOrdered(byChild: key)
 
         switch condition {
         case let condition as EqualsFilterCondition:
-            query = query.queryEqualToValue(condition.value)
+            query = query.queryEqual(toValue: condition.value)
         case let condition as BetweenFilterCondition:
-            query = query.queryStartingAtValue(condition.value1).queryEndingAtValue(condition.value2)
+            query = query.queryStarting(atValue: condition.value1).queryEnding(atValue: condition.value2)
         default:
             fatalError("Cannot apply filter to query for condition type \(type(of: condition))")
         }
@@ -160,7 +162,7 @@ public class FirebaseAdapter: StoreAdapter {
         return query
     }
 
-    func recordsFromSnapshot(snapshot: FDataSnapshot, filter: Filter, sort: String?) -> [Record] {
+    func recordsFromSnapshot(_ snapshot: FDataSnapshot, filter: Filter, sort: String?) -> [Record] {
         var records = [Record]()
 
         for item in snapshot.children {
@@ -176,15 +178,15 @@ public class FirebaseAdapter: StoreAdapter {
         // we have to apply it here.
 
         if filter.conditions.count > 0 && sort == "priority" {
-            records.sortInPlace { $0.data.priority < $1.data.priority }
+            records.sorted { $0.data.priority! < $1.data.priority! }
         }
 
         return records
     }
 
-    func recordFromSnapshot(snap: FDataSnapshot) -> Record? {
+    func recordFromSnapshot(_ snap: FDataSnapshot) -> Record? {
         guard let data = snap.value as? [String: AnyObject] else { return nil }
-        let priority = (snap.priority as? NSNumber)?.integerValue
+        let priority = (snap.priority as? NSNumber)?.intValue
         let record = Record(id: snap.key, priority: priority, values: data)
 
         return record
@@ -192,12 +194,12 @@ public class FirebaseAdapter: StoreAdapter {
 
     // MARK: Finding
 
-    public func find(path: String, id: String, callback: FindCallback) {
-        let query = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
+    open func find(_ path: String, id: String, callback: @escaping FindCallback) {
+        let query = rootLocation.child(byAppendingPath: path).child(byAppendingPath: id)
 
-        query.observeSingleEventOfType(.Value, withBlock: { snap in
-            let record = self.recordFromSnapshot(snap)
-            callback(record: record)
+        query?.observeSingleEvent(of: .value, with: { snap in
+            let record = self.recordFromSnapshot(snap!)
+            callback(record)
         })
 
     }
@@ -205,9 +207,9 @@ public class FirebaseAdapter: StoreAdapter {
     // MARK: Helpers
     // ----------------------------------------------------------------------
 
-    public var rootLocation: Firebase {
+    open var rootLocation: Firebase {
         if let user = firebase.authData {
-            return firebase.childByAppendingPath("online").childByAppendingPath(user.uid)
+            return firebase.child(byAppendingPath: "online").child(byAppendingPath: user.uid)
         } else {
             return offlineLocation
         }
@@ -215,37 +217,37 @@ public class FirebaseAdapter: StoreAdapter {
 
     var offlineLocation: Firebase {
 //        fatalError("Firebase will NOT be used offline!")
-        return firebase.childByAppendingPath("offline").childByAppendingPath(NKDevice.uniqueIdentifier)
+        return firebase.child(byAppendingPath: "offline").child(byAppendingPath: NKDevice.uniqueIdentifier)
     }
 
     // MARK: Creating
     // ----------------------------------------------------------------------
 
-    public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) -> String {
-        var location = rootLocation.childByAppendingPath(path)
+    open func create(_ path: String, id: String?, data: RecordData, callback: CreateCallback?) -> String {
+        var location = rootLocation.child(byAppendingPath: path)
 
         if let id = id {
-            location = location.childByAppendingPath(id)
+            location = location?.child(byAppendingPath: id)
         } else {
-            location = location.childByAutoId()
+            location = location?.childByAutoId()
         }
 
-        location.setValue(data.values, andPriority: data.priority) { (error, node) -> Void in
-            let record = Record(id: node.key, data: data)
+        location?.setValue(data.values, andPriority: data.priority) { (error, node) -> Void in
+            let record = Record(id: (node?.key)!, data: data)
 
-            callback?(record: record)
+            callback?(record)
         }
         
-        return location.key
+        return location!.key
     }
 
     // MARK: - Updating
     // ----------------------------------------------------------------------
 
-    public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
-        let location = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
-        location.setPriority(data.priority)
-        location.updateChildValues(data.values) { (err, loc) in
+    open func update(_ path: String, id: String, data: RecordData, callback: UpdateCallback?) {
+        let location = rootLocation.child(byAppendingPath: path).child(byAppendingPath: id)
+        location?.setPriority(data.priority)
+        location?.updateChildValues(data.values) { (err, loc) in
             callback?()
         }
     }
@@ -260,17 +262,17 @@ public class FirebaseAdapter: StoreAdapter {
     }
     */
 
-    func find(id: String, filter: Filter, callback: FindCallback) {
+    func find(_ id: String, filter: Filter, callback: FindCallback) {
     }
 
 
     // MARK: - Deleting
     // ----------------------------------------------------------------------
 
-    public func delete(path: String, id: String, callback: DeleteCallback?) {
-        let location = rootLocation.childByAppendingPath(path).childByAppendingPath(id)
+    open func delete(_ path: String, id: String, callback: DeleteCallback?) {
+        let location = rootLocation.child(byAppendingPath: path).child(byAppendingPath: id)
         
-        location.removeValue()
+        location?.removeValue()
     }
 }
 

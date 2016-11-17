@@ -17,13 +17,13 @@ public typealias FindCallback = ((_ record: Record?) -> ())
 public protocol StoreAdapter {
     // Create record. You can pass optional ID - if you pass it, record will be
     // created with that ID.
-    func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) -> String
-    func update(path: String, id: String, data: RecordData, callback: UpdateCallback?)
-    func delete(path: String, id: String, callback: DeleteCallback?)
-    func startUpdating(path: String, filter: Filter, sort: String?, callback: StoreCallback) -> UpdatingHandle
-    func stopUpdating(handle: UpdatingHandle)
-    func loadNow(path: String, filter: Filter, sort: String?, callback: StoreCallback)
-    func find(path: String, id: String, callback: FindCallback)
+    func create(_ path: String, id: String?, data: RecordData, callback: CreateCallback?) -> String
+    func update(_ path: String, id: String, data: RecordData, callback: UpdateCallback?)
+    func delete(_ path: String, id: String, callback: DeleteCallback?)
+    func startUpdating(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback) -> UpdatingHandle
+    func stopUpdating(_ handle: UpdatingHandle)
+    func loadNow(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback)
+    func find(_ path: String, id: String, callback: @escaping FindCallback)
 }
 
 public protocol UpdatingHandle {

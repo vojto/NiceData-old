@@ -14,34 +14,34 @@ typealias CDCallback = (([NSManagedObject]) -> ())
 
 
 class CDObserver: NSObject {
-    let request: NSFetchRequest
+    let request: NSFetchRequest<NSFetchRequestResult>
     let callback: CDCallback
 
-    init(request: NSFetchRequest, callback: CDCallback) {
+    init(request: NSFetchRequest<NSFetchRequestResult>, callback: @escaping CDCallback) {
         self.request = request
         self.callback = callback
 
         super.init()
 
-        let context = NSManagedObjectContext.MR_defaultContext()
-        let center = NSNotificationCenter.defaultCenter()
-        center.addObserver(self, selector: "handleObjectsChanged:", name: NSManagedObjectContextObjectsDidChangeNotification, object: context)
+        let context = NSManagedObjectContext.mr_default()
+        let center = NotificationCenter.default
+        center.addObserver(self, selector: #selector(CDObserver.handleObjectsChanged(_:)), name: NSNotification.Name.NSManagedObjectContextObjectsDidChange, object: context)
 
         fetch()
     }
 
     func fetch() {
-        let context = NSManagedObjectContext.MR_defaultContext()
+        let context = NSManagedObjectContext.mr_default()!
 
         do {
-            let results = try context.executeFetchRequest(request) as! [NSManagedObject]
+            let results = try context.fetch(request) as! [NSManagedObject]
             callback(results)
         } catch _ {
             Log.e("Failed executing fetch request \(request)")
         }
     }
 
-    func handleObjectsChanged(notification: NSNotification) {
+    func handleObjectsChanged(_ notification: Notification) {
         let userInfo = notification.userInfo!
         let entity = request.entity
 
@@ -74,9 +74,9 @@ class CDObserver: NSObject {
 
 
     func cancel() {
-        let center = NSNotificationCenter.defaultCenter()
-        let context = NSManagedObjectContext.MR_defaultContext()
+        let center = NotificationCenter.default
+        let context = NSManagedObjectContext.mr_default()
 
-        center.removeObserver(self, name: NSManagedObjectContextObjectsDidChangeNotification, object: context)
+        center.removeObserver(self, name: NSNotification.Name.NSManagedObjectContextObjectsDidChange, object: context)
     }
 }

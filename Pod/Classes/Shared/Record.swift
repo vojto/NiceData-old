@@ -13,7 +13,7 @@ public typealias RecordValues = SimpleDict
 public typealias RecordPriority = Int?
 
 public enum ModelError : Error {
-    case BadData
+    case badData
 }
 
 struct RecordKeys {
@@ -23,9 +23,9 @@ struct RecordKeys {
     static let priority = "p"
 }
 
-public class Record: CustomDebugStringConvertible {
-    public let id: String
-    public let data: RecordData
+open class Record: CustomDebugStringConvertible {
+    open let id: String
+    open let data: RecordData
 
     init(id: String, data: RecordData) {
         self.id = id
@@ -33,17 +33,17 @@ public class Record: CustomDebugStringConvertible {
     }
 
     convenience init(id: String, priority: RecordPriority, values: RecordValues) {
-        self.init(id: id, data: RecordData(values: values, priority: priority))
+        self.init(id: id, data: RecordData(values, priority: priority))
     }
 
     func serialize() -> SerializedRecord {
         return [
-            RecordKeys.id: id,
-            RecordKeys.data: data.serialize()
+            RecordKeys.id: id as AnyObject,
+            RecordKeys.data: data.serialize() as AnyObject
         ]
     }
 
-    static func deserialize(serialized: SerializedRecord) -> Record? {
+    static func deserialize(_ serialized: SerializedRecord) -> Record? {
         guard let id = serialized[RecordKeys.id] as? String else { return nil }
         guard let data = serialized[RecordKeys.data] as? SimpleDict else { return nil }
         guard let recordData = RecordData.deserialize(data) else { return nil }
@@ -51,89 +51,89 @@ public class Record: CustomDebugStringConvertible {
         return Record(id: id, data: recordData)
     }
 
-    public var debugDescription: String {
+    open var debugDescription: String {
         return "<\(id):\(data)>"
     }
 }
 
-public class RecordData: CustomDebugStringConvertible {
-    public let priority: RecordPriority
-    public var values: RecordValues
+open class RecordData: CustomDebugStringConvertible {
+    open let priority: RecordPriority
+    open var values: RecordValues
 
-    public init(values: RecordValues, priority: RecordPriority) {
+    public init(_ values: RecordValues, priority: RecordPriority) {
         self.priority = priority
         self.values = values
     }
 
-    public func serialize() -> [String: AnyObject] {
+    open func serialize() -> [String: AnyObject] {
         var result: [String: AnyObject] = [
-            RecordKeys.values: values
+            RecordKeys.values: values as AnyObject
         ]
 
         if let priority = self.priority {
-            result[RecordKeys.priority] = priority
+            result[RecordKeys.priority] = priority as AnyObject?
         }
 
         return result
     }
 
-    public static func deserialize(serialized: SimpleDict) -> RecordData? {
+    open static func deserialize(_ serialized: SimpleDict) -> RecordData? {
         guard let priority = serialized[RecordKeys.priority] as? RecordPriority else { return nil }
         guard let values = serialized[RecordKeys.values] as? RecordValues else { return nil }
 
-        return RecordData(values: values, priority: priority)
+        return RecordData(values, priority: priority)
     }
 
-    public func requiredDate(key: String) throws -> NSDate {
-        guard let timestamp = values[key] as? NSNumber else { throw ModelError.BadData }
-        return NSDate(timeIntervalSince1970: timestamp.doubleValue)
+    open func requiredDate(_ key: String) throws -> Date {
+        guard let timestamp = values[key] as? NSNumber else { throw ModelError.badData }
+        return Date(timeIntervalSince1970: timestamp.doubleValue)
     }
 
-    public func optionalDate(key: String) throws -> NSDate? {
-        guard let timestamp = values[key] as? NSNumber? else { throw ModelError.BadData }
+    open func optionalDate(_ key: String) throws -> Date? {
+        guard let timestamp = values[key] as? NSNumber? else { throw ModelError.badData }
         if let timestamp = timestamp {
-            return NSDate(timeIntervalSince1970: timestamp.doubleValue)
+            return Date(timeIntervalSince1970: timestamp.doubleValue)
         } else {
             return nil
         }
     }
 
-    public func requiredDouble(key: String) throws -> Double {
-        guard let value = values[key] as? NSNumber else { throw ModelError.BadData }
+    open func requiredDouble(_ key: String) throws -> Double {
+        guard let value = values[key] as? NSNumber else { throw ModelError.badData }
         return value.doubleValue
     }
 
-    public func optionalDouble(key: String) throws -> Double? {
-        guard let value = values[key] as? NSNumber? else { throw ModelError.BadData }
+    open func optionalDouble(_ key: String) throws -> Double? {
+        guard let value = values[key] as? NSNumber? else { throw ModelError.badData }
         return value?.doubleValue
     }
 
-    public func optionalInt(key: String) throws -> Int? {
-        guard let value = values[key] as? NSNumber? else { throw ModelError.BadData }
-        return value?.integerValue
+    open func optionalInt(_ key: String) throws -> Int? {
+        guard let value = values[key] as? NSNumber? else { throw ModelError.badData }
+        return value?.intValue
     }
 
-    public func requiredBool(key: String) throws -> Bool {
-        guard let value = values[key] as? NSNumber else { throw ModelError.BadData }
+    open func requiredBool(_ key: String) throws -> Bool {
+        guard let value = values[key] as? NSNumber else { throw ModelError.badData }
         return value.boolValue
     }
 
-    public func optionalBool(key: String) throws -> Bool? {
-        guard let value = values[key] as? NSNumber? else { throw ModelError.BadData }
+    open func optionalBool(_ key: String) throws -> Bool? {
+        guard let value = values[key] as? NSNumber? else { throw ModelError.badData }
         return value?.boolValue
     }
 
-    public func requiredString(key: String) throws -> String {
-        guard let value = values[key] as? String else { throw ModelError.BadData }
+    open func requiredString(_ key: String) throws -> String {
+        guard let value = values[key] as? String else { throw ModelError.badData }
         return value
     }
 
-    public func optionalString(key: String) throws -> String? {
-        guard let value = values[key] as? String? else { throw ModelError.BadData }
+    open func optionalString(_ key: String) throws -> String? {
+        guard let value = values[key] as? String? else { throw ModelError.badData }
         return value
     }
 
-    public var debugDescription: String {
+    open var debugDescription: String {
         return "{\(priority) \(values)}"
     }
 

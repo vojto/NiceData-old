@@ -115,18 +115,18 @@ import Foundation
 /// @see https://www.firebase.com/blog/2015-02-11-firebase-unique-identifiers.html
 // Taken from: https://gist.github.com/pgherveou/8e2b3a718bc9e367efa0
 private let ASC_CHARS: [Character] = Array("-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".characters)
-private let DESC_CHARS: [Character] = ASC_CHARS.reverse()
+private let DESC_CHARS: [Character] = ASC_CHARS.reversed()
 private var lastPushTime: UInt64 = 0
-private var lastRandChars = Array<Int>(count: 12, repeatedValue: 0)
+private var lastRandChars = Array<Int>(repeating: 0, count: 12)
 
-func generatePushID(ascending: Bool = true) -> String {
+func generatePushID(_ ascending: Bool = true) -> String {
     let PUSH_CHARS = ascending ? ASC_CHARS: DESC_CHARS
-    var timeStampChars = Array<Character>(count: 8, repeatedValue: PUSH_CHARS.first!)
-    var now = UInt64(NSDate().timeIntervalSince1970 * 1000)
+    var timeStampChars = Array<Character>(repeating: PUSH_CHARS.first!, count: 8)
+    var now = UInt64(Date().timeIntervalSince1970 * 1000)
     let duplicateTime = (now == lastPushTime)
     lastPushTime = now
-
-    for var i = 7; i >= 0; i-- {
+    
+    for i in (0...7).reversed() {
         timeStampChars[i] = PUSH_CHARS[Int(now % 64)]
         now >>= 6
     }
@@ -135,14 +135,16 @@ func generatePushID(ascending: Bool = true) -> String {
     var id: String = String(timeStampChars)
 
     if !duplicateTime {
-        for i in 0..<12 { lastRandChars[i] = Int(64 *  Double(rand()) / Double(RAND_MAX)) }
+        for i in 0..<12 { lastRandChars[i] = Int(64 *  Double(arc4random()) / Double(RAND_MAX)) }
     } else {
-        var i: Int
-        for i = 11; i >= 0 && lastRandChars[i] == 63; i-- {
+        var lastI: Int?
+        
+        for i in (0...11).reversed() where lastRandChars[i] == 63 {
             lastRandChars[i] = 0
+            lastI = i
         }
 
-        lastRandChars[i]++
+        lastRandChars[lastI!] += 1
     }
 
     for i in 0..<12 { id.append(PUSH_CHARS[lastRandChars[i]]) }

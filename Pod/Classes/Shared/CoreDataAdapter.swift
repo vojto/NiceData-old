@@ -19,9 +19,9 @@ struct CoreDataHandle: UpdatingHandle {
     let observer: CDObserver
 }
 
-public class CoreDataAdapter: StoreAdapter {
+open class CoreDataAdapter: StoreAdapter {
     // TODO: Great job hard coding this
-    public static var pathMap = [
+    open static var pathMap = [
         "tasks": "Task",
         "cycles": "Cycle",
         "dayStats": "DayStat"
@@ -30,10 +30,11 @@ public class CoreDataAdapter: StoreAdapter {
     public init() {
     }
 
-    public func create(path: String, var id: String?, data: RecordData, callback: CreateCallback?) -> String {
+    open func create(_ path: String, id: String?, data: RecordData, callback: CreateCallback?) -> String {
+        var id = id
         let priority = data.priority
 
-        let context = NSManagedObjectContext.MR_defaultContext()
+        let context = NSManagedObjectContext.mr_default()!
 
         let entityName = self.entityForPath(path)
 
@@ -47,20 +48,20 @@ public class CoreDataAdapter: StoreAdapter {
         }
 
         if object == nil {
-            object = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: context)
+            object = NSEntityDescription.insertNewObject(forEntityName: entityName, into: context)
         }
 
             self.updateObjectFromRecord(object!, id: id!, data: data)
 
-        context.MR_saveToPersistentStoreAndWait()
+        context.mr_saveToPersistentStoreAndWait()
 
         let record = Record(id: id!, priority: priority, values: data.values)
-        callback?(record: record)
+        callback?(record)
         
         return id!
     }
 
-    public func updateObjectFromRecord(object: NSManagedObject, id: String, data: RecordData) {
+    open func updateObjectFromRecord(_ object: NSManagedObject, id: String, data: RecordData) {
         object.setValue(id, forKey: "id")
 
         if let priority = data.priority {
@@ -76,28 +77,28 @@ public class CoreDataAdapter: StoreAdapter {
         }
     }
 
-    public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
-        let context = NSManagedObjectContext.MR_defaultContext()
+    open func update(_ path: String, id: String, data: RecordData, callback: UpdateCallback?) {
+        let context = NSManagedObjectContext.mr_default()
 
-        guard let object = self.findObject(context, path: path, id: id) else {
+        guard let object = self.findObject(context!, path: path, id: id) else {
             Log.e("Cannot find object with id = \(id)")
             return
         }
 
         self.updateObjectFromRecord(object, id: id, data: data)
 
-        context.MR_saveToPersistentStoreAndWait()
+        context?.mr_saveToPersistentStoreAndWait()
         
         callback?()
     }
 
-    internal func findObject(context: NSManagedObjectContext, path: String, id: String) -> NSManagedObject? {
+    internal func findObject(_ context: NSManagedObjectContext, path: String, id: String) -> NSManagedObject? {
         let entityName = self.entityForPath(path)
-        let request = NSFetchRequest(entityName: entityName)
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
         request.predicate = NSPredicate(format: "id = %@", id)
 
         do {
-            let results = try context.executeFetchRequest(request)
+            let results = try context.fetch(request)
             return results.first as! NSManagedObject?
         } catch _ {
             Log.e("Failed finding object by id \(path) \(id)")
@@ -106,34 +107,34 @@ public class CoreDataAdapter: StoreAdapter {
     }
 
 
-    public func startUpdating(path: String, filter: Filter, sort: String?, callback: StoreCallback) -> UpdatingHandle {
+    open func startUpdating(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback) -> UpdatingHandle {
         let request = createFetchRequest(path, filter: filter, sort: sort)
 
         let observer = CDObserver(request: request) { results in
             let records = self.recordsFromResults(results)
 
-            callback(records: records)
+            callback(records)
         }
 
         return CoreDataHandle(observer: observer)
     }
 
-    public func recordsFromResults(results: [NSManagedObject]) -> [Record] {
+    open func recordsFromResults(_ results: [NSManagedObject]) -> [Record] {
         var records = [Record]()
 
         for object in results {
             var values = RecordValues()
             var priority: Int?
-            let id = object.valueForKey("id") as! String
+            let id = object.value(forKey: "id") as! String
 
             let entity = object.entity
             let attributes = entity.attributesByName
 
             for (attribute, _) in attributes {
                 if attribute == "priority" {
-                    priority = object.valueForKey(attribute) as? Int
+                    priority = object.value(forKey: attribute) as? Int
                 } else {
-                    values[attribute] = object.valueForKey(attribute)
+                    values[attribute] = object.value(forKey: attribute) as AnyObject?
                 }
             }
 
@@ -144,13 +145,14 @@ public class CoreDataAdapter: StoreAdapter {
         return records
     }
 
-    public func createFetchRequest(path: String, filter: Filter, var sort: String?) -> NSFetchRequest {
+    open func createFetchRequest(_ path: String, filter: Filter, sort: String?) -> NSFetchRequest<NSFetchRequestResult> {
+        var sort = sort
         if sort == nil {
             sort = "priority"
         }
 
         let entityName = entityForPath(path)
-        let request = NSFetchRequest(entityName: entityName)
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
         request.sortDescriptors = [NSSortDescriptor(key: sort, ascending: true)]
 
         // Create NSCompoundPredicate from conditions
@@ -185,28 +187,28 @@ public class CoreDataAdapter: StoreAdapter {
         return request
     }
 
-    public func stopUpdating(handle: UpdatingHandle) {
+    open func stopUpdating(_ handle: UpdatingHandle) {
         guard let handle = handle as? CoreDataHandle else { return }
         handle.observer.cancel()
     }
 
-    public func loadNow(path: String, filter: Filter, sort: String?, callback: StoreCallback) {
+    open func loadNow(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback) {
         let request = createFetchRequest(path, filter: filter, sort: sort)
-        let context = NSManagedObjectContext.MR_defaultContext()
+        let context = NSManagedObjectContext.mr_default()
 
         do {
-            let results = try context.executeFetchRequest(request)
+            let results = try context?.fetch(request)
 
             let records = self.recordsFromResults(results as! [NSManagedObject])
 
-            callback(records: records)
+            callback(records)
         } catch _ {
             Log.e("Failed loading results using loadNow")
         }
 
     }
 
-    public func find(path: String, id: String, callback: FindCallback) {
+    open func find(_ path: String, id: String, callback: @escaping FindCallback) {
         fatalError("find not implemented")
     }
 
@@ -214,17 +216,17 @@ public class CoreDataAdapter: StoreAdapter {
     // -----------------------------------------------------------------------
 
 
-    public func delete(path: String, id: String, callback: DeleteCallback?) {
-        let context = NSManagedObjectContext.MR_defaultContext()
+    open func delete(_ path: String, id: String, callback: DeleteCallback?) {
+        let context = NSManagedObjectContext.mr_default()
 
-        guard let object = findObject(context, path: path, id: id) else {
+        guard let object = findObject(context!, path: path, id: id) else {
             Log.e("Didn't find object with id \(id) at \(path) so cannot delete.")
             return
         }
 
-        context.deleteObject(object)
+        context!.delete(object)
 
-        context.MR_saveToPersistentStoreAndWait()
+        context!.mr_saveToPersistentStoreAndWait()
 
         callback?()
     }
@@ -232,7 +234,7 @@ public class CoreDataAdapter: StoreAdapter {
 
     // Private
 
-    internal func entityForPath(path: String) -> String {
+    internal func entityForPath(_ path: String) -> String {
         if let entity = CoreDataAdapter.pathMap[path] {
             return entity
         } else {

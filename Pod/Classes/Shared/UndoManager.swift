@@ -32,13 +32,13 @@ class UndoGroup {
     var operations = [UndoOperation]()
 }
 
-public class UndoManager {
-    public static let instance = UndoManager()
+open class UndoManager {
+    open static let instance = UndoManager()
     
     var trackedGroups = [UndoGroup]()
     var currentGroup: UndoGroup?
     
-    public func track(block: (() -> ())) {
+    open func track(_ block: (() -> ())) {
         
         currentGroup = UndoGroup()
         
@@ -55,7 +55,7 @@ public class UndoManager {
         }
     }
     
-    func trackCreate(path: String, id: String) {
+    func trackCreate(_ path: String, id: String) {
         let op = UndoOperation.create(path: path, id: id)
         self.track(op)
     }
@@ -63,13 +63,13 @@ public class UndoManager {
     
     // Updates aren't tracked automatically from Store, gotta track them 
     // from UI code.
-    public func trackUpdate(path: String, id: String, valuesBefore: RecordValues) {
+    open func trackUpdate(_ path: String, id: String, valuesBefore: RecordValues) {
         let op = UndoOperation.update(path: path, id: id, valuesBefore: valuesBefore)
         self.track(op)
         
     }
     
-    public func undo() {
+    open func undo() {
         guard trackedGroups.count > 0 else {
             return
         }
@@ -90,7 +90,7 @@ public class UndoManager {
             
             break
         case .update(let path, let id, let valuesBefore):
-            let data = RecordData(values: valuesBefore, priority: nil)
+            let data = RecordData(valuesBefore, priority: nil)
             store.update(path, id: id, data: data, callback: nil)
         }
     }

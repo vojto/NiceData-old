@@ -9,11 +9,11 @@
 import Foundation
 
 
-public class StoreSubscription: Hashable {
+open class StoreSubscription: Hashable {
     let name: String
-    public var path: String!
-    public var filter = Filter()
-    public var sort: String?
+    open var path: String!
+    open var filter = Filter()
+    open var sort: String?
 
     var callbacks = [StoreCallback]()
     var lastRecords: [Record]?
@@ -27,7 +27,7 @@ public class StoreSubscription: Hashable {
         return handle != nil
     }
 
-    public func addCallback(callback: StoreCallback) {
+    open func addCallback(_ callback: @escaping StoreCallback) {
         callbacks.append(callback)
     }
 
@@ -35,11 +35,11 @@ public class StoreSubscription: Hashable {
         return GeneralStore.instance.adapter
     }
 
-    public var hashValue: Int {
+    open var hashValue: Int {
         return name.hashValue
     }
 
-    public func start() {
+    open func start() {
         let store = GeneralStore.instance
 
         if !store.hasSubscription(self) {
@@ -57,7 +57,7 @@ public class StoreSubscription: Hashable {
         }
     }
 
-    public func stop() {
+    open func stop() {
         if let handle = self.handle {
             adapter.stopUpdating(handle)
             self.handle = nil
@@ -66,7 +66,7 @@ public class StoreSubscription: Hashable {
         }
     }
 
-    public func forceRefresh() {
+    open func forceRefresh() {
         let store = GeneralStore.instance
 
         if !store.hasSubscription(self) {
@@ -77,9 +77,9 @@ public class StoreSubscription: Hashable {
         start()
     }
 
-    func runCallbacks(records: [Record]) {
+    func runCallbacks(_ records: [Record]) {
         for callback in callbacks {
-            callback(records: records)
+            callback(records)
         }
     }
 }

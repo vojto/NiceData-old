@@ -11,33 +11,33 @@ import Foundation
 
 //public typealias Filter = [String: AnyObject]
 
-public class Filter {
+open class Filter {
     var conditions = [FilterCondition]()
 
     public init() {
     }
 
-    public func between(column: String, value1: AnyObject, value2: AnyObject) -> Filter {
+    open func between(_ column: String, value1: AnyObject, value2: AnyObject) -> Filter {
         conditions.append(BetweenFilterCondition(column: column, value1: value1, value2: value2))
         return self
     }
 
-    public func equals(column: String, value: AnyObject) -> Filter {
+    open func equals(_ column: String, value: AnyObject) -> Filter {
         conditions.append(EqualsFilterCondition(column: column, value: value))
         return self
     }
 
-    public func inValues(column: String, values: [AnyObject]) -> Filter {
+    open func inValues(_ column: String, values: [AnyObject]) -> Filter {
         conditions.append(InFilterCondition(column: column, values: values))
         return self
     }
 
-    public func removeInCondition() -> InFilterCondition? {
-        for var i = 0; i < conditions.count; i++ {
+    open func removeInCondition() -> InFilterCondition? {
+        for i in 0 ..< conditions.count {
             let condition = conditions[i]
 
             if let condition = condition as? InFilterCondition {
-                conditions.removeAtIndex(i)
+                conditions.remove(at: i)
                 return condition
             }
         }
@@ -54,7 +54,7 @@ public class Filter {
 //    case In
 //}
 
-public class FilterCondition {
+open class FilterCondition {
     var column: String
 
     init(column: String) {
@@ -62,8 +62,8 @@ public class FilterCondition {
     }
 }
 
-public class EqualsFilterCondition: FilterCondition {
-    public var value: AnyObject
+open class EqualsFilterCondition: FilterCondition {
+    open var value: AnyObject
 
     public init(column: String, value: AnyObject) {
         self.value = value
@@ -72,9 +72,9 @@ public class EqualsFilterCondition: FilterCondition {
 
 }
 
-public class BetweenFilterCondition: FilterCondition {
-    public var value1: AnyObject
-    public var value2: AnyObject
+open class BetweenFilterCondition: FilterCondition {
+    open var value1: AnyObject
+    open var value2: AnyObject
 
     init(column: String, value1: AnyObject, value2: AnyObject) {
         self.value1 = value1
@@ -83,8 +83,8 @@ public class BetweenFilterCondition: FilterCondition {
     }
 }
 
-public class InFilterCondition: FilterCondition {
-    public var values: [AnyObject]
+open class InFilterCondition: FilterCondition {
+    open var values: [AnyObject]
 
     init(column: String, values: [AnyObject]) {
         self.values = values
@@ -93,13 +93,13 @@ public class InFilterCondition: FilterCondition {
 }
 
 
-public class GeneralStore {
+open class GeneralStore {
     var subscriptions = Set<StoreSubscription>()
 
     static var _instance: GeneralStore?
-    public static var instance: GeneralStore { return GeneralStore._instance! }
+    open static var instance: GeneralStore { return GeneralStore._instance! }
 
-    public var adapter: StoreAdapter!
+    open var adapter: StoreAdapter!
     
     // MARK: - Lifecycle
     // -----------------------------------------------------------------------
@@ -112,7 +112,7 @@ public class GeneralStore {
     // MARK: - Managing subscriptions
     // -----------------------------------------------------------------------
 
-    public func addSubscription(subscription: StoreSubscription) {
+    open func addSubscription(_ subscription: StoreSubscription) {
         if subscriptions.contains(subscription) {
             fatalError("Cannot add subscription named \(subscription.name), already have one with same name.")
         }
@@ -120,61 +120,61 @@ public class GeneralStore {
         subscriptions.insert(subscription)
     }
 
-    public func hasSubscription(subscription: StoreSubscription) -> Bool {
+    open func hasSubscription(_ subscription: StoreSubscription) -> Bool {
         return subscriptions.contains(subscription)
     }
 
-    public func removeSubscription(subscription: StoreSubscription) {
+    open func removeSubscription(_ subscription: StoreSubscription) {
         subscription.stop()
         subscriptions.remove(subscription)
     }
     
-    public func subscriptionNamed(name: String) -> StoreSubscription? {
+    open func subscriptionNamed(_ name: String) -> StoreSubscription? {
         return subscriptions.filter { $0.name == name }.first
     }
     
     // MARK: - Controlling subscriptions
     // -----------------------------------------------------------------------
 
-    public func refreshAll() {
+    open func refreshAll() {
         for subscription in subscriptions {
             subscription.forceRefresh()
         }
     }
 
-    public func stopAll() {
+    open func stopAll() {
         for subscription in subscriptions {
             subscription.stop()
         }
     }
 
-    public func startAll() {
+    open func startAll() {
         for subscription in subscriptions {
             subscription.start()
         }
     }
 
-    public func create(path: String, id: String?, data: RecordData, callback: CreateCallback?) {
+    open func create(_ path: String, id: String?, data: RecordData, callback: CreateCallback?) {
         let id = adapter.create(path, id: id, data: data, callback: callback)
         
         UndoManager.instance.trackCreate(path, id: id)
     }
 
-    public func update(path: String, id: String, data: RecordData, callback: UpdateCallback?) {
+    open func update(_ path: String, id: String, data: RecordData, callback: UpdateCallback?) {
         adapter.update(path, id: id, data: data, callback: callback)
     }
 
-    public func find(path: String, id: String, callback: FindCallback) {
+    open func find(_ path: String, id: String, callback: @escaping FindCallback) {
         print("Finding: \(path) / \(id)")
 
         adapter.find(path, id: id, callback: callback)
     }
 
-    public func findOnce(path: String, filter: Filter, sort: String?, callback: StoreCallback) {
+    open func findOnce(_ path: String, filter: Filter, sort: String?, callback: @escaping StoreCallback) {
         adapter.loadNow(path, filter: filter, sort: sort, callback: callback)
     }
 
-    public func delete(path: String, id: String, callback: DeleteCallback?) {
+    open func delete(_ path: String, id: String, callback: DeleteCallback?) {
         adapter.delete(path, id: id, callback: callback)
     }
 }
